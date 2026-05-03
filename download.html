@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download Certificate</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 40px; background: #f5f5f5; }
+    #cert {
+      background: white; border: 8px double #1a5276;
+      max-width: 700px; margin: 0 auto; padding: 50px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .org   { color: #1a5276; font-size: 26px; font-weight: bold; }
+    .sub   { color: #777; font-size: 12px; margin-bottom: 36px; }
+    .name  { font-size: 32px; color: #1a5276; font-weight: bold;
+             border-bottom: 2px solid #1a5276; display:inline-block; padding-bottom: 6px; }
+    .role  { font-size: 16px; margin: 12px 0; color: #444; }
+    .dur   { color: #666; font-size: 14px; margin-bottom: 36px; }
+    .bottom { display: flex; justify-content: space-between; margin-top: 50px; align-items: flex-end; }
+    .sign  { text-align: left; }
+    .sign-line { border-top: 1px solid #333; padding-top: 6px; width: 180px; font-size: 13px; }
+    #qr-img    { width: 100px; height: 100px; }
+    .qr-label  { font-size: 10px; color: #aaa; margin-top: 4px; }
+    button { margin-top: 24px; padding: 12px 32px; background: #1a5276;
+             color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+    button:hover { background: #154360; }
+    #loading { color: #888; font-size: 16px; }
+  </style>
+</head>
+<body>
+
+  <div id="loading">Loading certificate...</div>
+  <div id="cert" style="display:none">
+    <div class="org">AMAANITVAM FOUNDATION</div>
+    <div class="sub">Registered NGO | New Delhi, India</div>
+    <p style="color:#555;font-size:15px;">This is to certify that</p>
+    <div class="name" id="c-name"></div>
+    <div class="role">has successfully completed an internship as</div>
+    <div class="role"><strong id="c-role"></strong></div>
+    <div class="dur" id="c-dur"></div>
+    <div style="color:#666;font-size:13px;" id="c-date"></div>
+    <div class="bottom">
+      <div class="sign">
+        <div class="sign-line">Authorized Signatory</div>
+        <div style="color:#888;font-size:11px;">Amaanitvam Foundation</div>
+      </div>
+      <div>
+        <img id="qr-img" src="" alt="QR Code"/>
+        <div class="qr-label">Scan to verify</div>
+        <div style="font-size:9px;color:#ccc;" id="c-id"></div>
+      </div>
+    </div>
+  </div>
+
+  <button onclick="downloadPDF()" id="dl-btn" style="display:none">⬇ Download as PDF</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+   const firebaseConfig = {
+  apiKey: "AIzaSyA_pmIMSJpJZnoDFUASIMF8cOopqFG9UGA",
+  authDomain: "amaanitvam-certs.firebaseapp.com",
+  projectId: "amaanitvam-certs",
+  storageBucket: "amaanitvam-certs.firebasestorage.app",
+  messagingSenderId: "326731010057",
+  appId: "1:326731010057:web:6f24246cad7cacdad968d8",
+  measurementId: "G-RCZLPS36G0"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const certId = params.get('id');
+
+    if (!certId) {
+      document.getElementById('loading').textContent = "❌ No certificate ID found.";
+    } else {
+      const snap = await getDoc(doc(db, "certificates", certId));
+      if (snap.exists()) {
+        const c = snap.data();
+
+       
+        document.getElementById('c-name').textContent = c.holderName;
+        document.getElementById('c-role').textContent = c.role;
+        document.getElementById('c-dur').textContent  = `Duration: ${c.duration}`;
+        document.getElementById('c-date').textContent = `Issue Date: ${c.issueDate}`;
+        document.getElementById('c-id').textContent   = certId;
+
+       
+        const verifyURL = `https://yourdomain.com/verify.html?id=${certId}`;
+        
+        const qrDiv = document.createElement('div');
+        new QRCode(qrDiv, { text: verifyURL, width: 100, height: 100 });
+        setTimeout(() => {
+          const qrImg = qrDiv.querySelector('img');
+          document.getElementById('qr-img').src = qrImg ? qrImg.src : '';
+        }, 500);
+
+       
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('cert').style.display    = 'block';
+        document.getElementById('dl-btn').style.display  = 'inline-block';
+      } else {
+        document.getElementById('loading').textContent = "❌ Certificate not found.";
+      }
+    }
+
+    window.downloadPDF = function() {
+      const el = document.getElementById('cert');
+      html2pdf().set({
+        margin: 10,
+        filename: 'Amaanitvam_Certificate.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+      }).from(el).save();
+    }
+  </script>
+</body>
+</html>

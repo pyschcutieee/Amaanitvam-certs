@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin — Add Certificate</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 500px; margin: 60px auto; padding: 20px; }
+    input, select { width: 100%; padding: 10px; margin: 8px 0 16px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    button { background: #1a5276; color: white; padding: 12px 28px; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; }
+    button:hover { background: #154360; }
+    #msg { margin-top: 16px; color: green; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>🎓 Add Certificate</h2>
+
+  <label>Holder Name</label>
+  <input type="text" id="name" placeholder="e.g. Priya Sharma">
+
+  <label>Role / Internship</label>
+  <input type="text" id="role" placeholder="e.g. Web Developer Intern">
+
+  <label>Duration</label>
+  <input type="text" id="duration" placeholder="e.g. Jan 2025 – Mar 2025">
+
+  <label>Issue Date</label>
+  <input type="date" id="date">
+
+  <button onclick="addCertificate()">➕ Add Certificate</button>
+  <div id="msg"></div>
+
+  
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyA_pmIMSJpJZnoDFUASIMF8cOopqFG9UGA",
+  authDomain: "amaanitvam-certs.firebaseapp.com",
+  projectId: "amaanitvam-certs",
+  storageBucket: "amaanitvam-certs.firebasestorage.app",
+  messagingSenderId: "326731010057",
+  appId: "1:326731010057:web:6f24246cad7cacdad968d8",
+  measurementId: "G-RCZLPS36G0"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+    window.addCertificate = async function() {
+      const name     = document.getElementById('name').value.trim();
+      const role     = document.getElementById('role').value.trim();
+      const duration = document.getElementById('duration').value.trim();
+      const date     = document.getElementById('date').value;
+
+      if (!name || !role || !duration || !date) {
+        alert("Saari fields fill karo!"); return;
+      }
+
+      try {
+        const docRef = await addDoc(collection(db, "certificates"), {
+          holderName : name,
+          role       : role,
+          duration   : duration,
+          issueDate  : date,
+          issuedBy   : "Amaanitvam Foundation",
+          createdAt  : new Date()
+        });
+
+        document.getElementById('msg').textContent =
+          `✅ Certificate added! ID: ${docRef.id}`;
+
+        
+        ['name','role','duration','date'].forEach(id =>
+          document.getElementById(id).value = '');
+
+      } catch(e) {
+        alert("Error: " + e.message);
+      }
+    }
+  </script>
+</body>
+</html>

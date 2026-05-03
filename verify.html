@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify Certificate — Amaanitvam Foundation</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 580px; margin: 60px auto; padding: 20px; background: #f5f5f5; }
+    .card { background: white; border-radius: 12px; padding: 36px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); text-align: center; }
+    .valid   { border-top: 6px solid #27ae60; }
+    .invalid { border-top: 6px solid #e74c3c; }
+    h2 { margin: 0 0 8px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px; }
+    td { padding: 12px; border-bottom: 1px solid #eee; }
+    td:first-child { font-weight: bold; color: #555; width: 40%; }
+    .btn { display: inline-block; margin-top: 20px; padding: 10px 24px;
+           background: #1a5276; color: white; border-radius: 8px;
+           text-decoration: none; font-size: 14px; }
+    #loading { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="card" id="result">
+    <p id="loading">🔍 Verifying certificate...</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyA_pmIMSJpJZnoDFUASIMF8cOopqFG9UGA",
+  authDomain: "amaanitvam-certs.firebaseapp.com",
+  projectId: "amaanitvam-certs",
+  storageBucket: "amaanitvam-certs.firebasestorage.app",
+  messagingSenderId: "326731010057",
+  appId: "1:326731010057:web:6f24246cad7cacdad968d8",
+  measurementId: "G-RCZLPS36G0"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+
+   
+    const params = new URLSearchParams(window.location.search);
+    const certId = params.get('id');
+    const box    = document.getElementById('result');
+
+    if (!certId) {
+      box.className = 'card invalid';
+      box.innerHTML = '<h2 style="color:#e74c3c">❌ Invalid Link</h2><p>Certificate ID missing.</p>';
+    } else {
+      const snap = await getDoc(doc(db, "certificates", certId));
+
+      if (snap.exists()) {
+        const c = snap.data();
+        box.className = 'card valid';
+        box.innerHTML = `
+          <h2 style="color:#27ae60">✅ Certificate Verified!</h2>
+          <p style="color:#777">Officially issued by Amaanitvam Foundation</p>
+          <table>
+            <tr><td>👤 Name</td><td>${c.holderName}</td></tr>
+            <tr><td>💼 Role</td><td>${c.role}</td></tr>
+            <tr><td>📅 Duration</td><td>${c.duration}</td></tr>
+            <tr><td>📆 Issue Date</td><td>${c.issueDate}</td></tr>
+            <tr><td>🏢 Issued By</td><td>${c.issuedBy}</td></tr>
+            <tr><td>🆔 ID</td><td style="font-size:11px;color:#aaa">${certId}</td></tr>
+          </table>
+          <a class="btn" href="download.html?id=${certId}">⬇ Download Certificate PDF</a>
+        `;
+      } else {
+        box.className = 'card invalid';
+        box.innerHTML = `
+          <h2 style="color:#e74c3c">❌ Certificate Not Found</h2>
+          <p>Ye certificate Amaanitvam Foundation ke records me nahi hai.</p>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
